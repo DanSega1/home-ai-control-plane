@@ -3,7 +3,7 @@
 # this file enforces consistent versions across the monorepo.
 
 fastapi==0.110.0
-uvicorn[standard]==0.29.0
+uvicorn==0.29.0
 motor==3.3.2
 pydantic==2.6.3
 pydantic-settings==2.2.1
