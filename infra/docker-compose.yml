@@ -1,0 +1,137 @@
+version: "3.9"
+
+# ---------------------------------------------------------------------------
+# Phase 1 – Minimal Viable Control Plane
+# ---------------------------------------------------------------------------
+
+services:
+
+  # --------------------------------------------------------------------------
+  # MongoDB – source of truth
+  # --------------------------------------------------------------------------
+  mongo:
+    image: mongo:7.0
+    container_name: homeai-mongo
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"          # expose locally for debugging only
+    networks:
+      - homeai
+
+  # --------------------------------------------------------------------------
+  # Open Policy Agent
+  # --------------------------------------------------------------------------
+  opa:
+    image: openpolicyagent/opa:0.63.0
+    container_name: homeai-opa
+    restart: unless-stopped
+    command:
+      - run
+      - --server
+      - --log-level=info
+      - /policies
+    volumes:
+      - ../policies:/policies:ro
+    ports:
+      - "8181:8181"
+    networks:
+      - homeai
+
+  # --------------------------------------------------------------------------
+  # LiteLLM – model router / proxy
+  # --------------------------------------------------------------------------
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: homeai-litellm
+    restart: unless-stopped
+    volumes:
+      - ../config/litellm_config.yaml:/app/config.yaml:ro
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    env_file:
+      - ../config/.env.litellm
+    ports:
+      - "4000:4000"
+    networks:
+      - homeai
+
+  # --------------------------------------------------------------------------
+  # Supervisor – FastAPI orchestration engine
+  # --------------------------------------------------------------------------
+  supervisor:
+    build:
+      context: ..
+      dockerfile: services/supervisor/Dockerfile
+    container_name: homeai-supervisor
+    restart: unless-stopped
+    depends_on:
+      - mongo
+      - opa
+      - litellm
+    env_file:
+      - ../config/.env.supervisor
+    ports:
+      - "8000:8000"
+    networks:
+      - homeai
+
+  # --------------------------------------------------------------------------
+  # Planner Agent
+  # --------------------------------------------------------------------------
+  planner:
+    build:
+      context: ..
+      dockerfile: agents/planner/Dockerfile
+    container_name: homeai-planner
+    restart: unless-stopped
+    depends_on:
+      - litellm
+    env_file:
+      - ../config/.env.planner
+    ports:
+      - "8001:8001"
+    networks:
+      - homeai
+
+  # --------------------------------------------------------------------------
+  # Skill Runner
+  # --------------------------------------------------------------------------
+  skill-runner:
+    build:
+      context: ..
+      dockerfile: services/skill-runner/Dockerfile
+    container_name: homeai-skill-runner
+    restart: unless-stopped
+    env_file:
+      - ../config/.env.skill-runner
+    ports:
+      - "8002:8002"
+    networks:
+      - homeai
+
+  # --------------------------------------------------------------------------
+  # Notion Sync
+  # --------------------------------------------------------------------------
+  notion-sync:
+    build:
+      context: ..
+      dockerfile: services/notion-sync/Dockerfile
+    container_name: homeai-notion-sync
+    restart: unless-stopped
+    depends_on:
+      - supervisor
+    env_file:
+      - ../config/.env.notion-sync
+    ports:
+      - "8003:8003"
+    networks:
+      - homeai
+
+
+volumes:
+  mongo_data:
+
+networks:
+  homeai:
+    driver: bridge
