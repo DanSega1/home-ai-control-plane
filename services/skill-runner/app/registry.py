@@ -1,35 +1,24 @@
 """
-Skill registry – maps skill IDs to their handler callables.
+Skill registry helpers.
 
-Handlers are async functions with signature:
-    async def handler(parameters: dict) -> dict
+Skills are declared in skills/registry.yaml (mounted into the container).
+This module provides lookup utilities used by other parts of the skill runner.
 """
 from __future__ import annotations
 
-import importlib
-import logging
-from typing import Any, Callable, Dict
+from typing import Any, Dict, List, Optional
 
-log = logging.getLogger("skill-runner.registry")
-
-# Lazy import map: skill_id → (module_path, function_name)
-_SKILL_MAP: Dict[str, tuple[str, str]] = {
-    "raindrop-io:bookmark_add":    ("skills.raindrop_io.skill", "bookmark_add"),
-    "raindrop-io:bookmark_search": ("skills.raindrop_io.skill", "bookmark_search"),
-    "raindrop-io:collection_list": ("skills.raindrop_io.skill", "collection_list"),
-    "raindrop-io:bookmark_delete": ("skills.raindrop_io.skill", "bookmark_delete"),
-}
+from app.skill_loader import get_registry
 
 
-def _load_handler(skill_id: str) -> Callable:
-    if skill_id not in _SKILL_MAP:
-        raise ValueError(f"Unknown skill: {skill_id}")
-    module_path, fn_name = _SKILL_MAP[skill_id]
-    module = importlib.import_module(module_path)
-    return getattr(module, fn_name)
+def skill_exists(skill_id: str) -> bool:
+    return skill_id in get_registry()
 
 
-async def dispatch(skill_id: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
-    handler = _load_handler(skill_id)
-    log.info("Dispatching skill %s", skill_id)
-    return await handler(parameters)
+def list_skills() -> List[str]:
+    return list(get_registry().keys())
+
+
+def get_skill_info(skill_id: str) -> Optional[Dict[str, Any]]:
+    return get_registry().get(skill_id)
+
