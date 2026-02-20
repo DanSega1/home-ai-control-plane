@@ -208,6 +208,7 @@ async def execute_task(task_id: str) -> Task:
             "skill": step.skill,
             "agent": "supervisor",
             "task_status": task.status,
+            "plan_risk_level": task.plan.risk_level,
         }
         skill_ok, _ = await check_skill_access(skill_input)
         if not skill_ok:
