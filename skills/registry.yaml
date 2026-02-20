@@ -1,0 +1,50 @@
+# Skill Registry – Home AI Control Plane
+#
+# Each entry declares an installed skill and where to load it from.
+# The skill-runner fetches SKILL.md at startup and caches it locally.
+#
+# Supported source types:
+#   github    – fetch from a GitHub repository (public or token-authed private)
+#   skillstore – fetch from skillstore.io by skill ID
+#   local     – load from a path relative to this file (dev/testing only)
+#
+# Auth env maps to Docker secrets / env variables injected at runtime.
+# skill_file defaults to "SKILL.md" if omitted.
+
+skills:
+
+  raindrop-io:
+    name: Raindrop.io Bookmark Management
+    description: >
+      Save and organize bookmarks, search your collection, manage reading lists,
+      and organize research materials using natural language.
+    source:
+      type: github
+      repo: DanSega1/raindrop-io-skill
+      ref: "1.0.0"           # tag, branch, or commit SHA
+      skill_file: SKILL.md
+    mcp_server: "https://api.raindrop.io/rest/v2/ai/mcp"
+    mcp_type: sse             # sse | stdio
+    version: "1.0.0"
+    tags: [bookmarks, productivity, research]
+    risk_level: low           # default risk if plan doesn't specify
+    requires_auth: true
+    auth_env: RAINDROP_MCP_TOKEN   # env var with the Bearer token
+
+  # ---------------------------------------------------------------------------
+  # Template for adding more skills
+  # ---------------------------------------------------------------------------
+  # my-skill:
+  #   name: My Skill
+  #   description: >
+  #     What this skill does.
+  #   source:
+  #     type: skillstore
+  #     skill_id: my-skill          # skillstore.io slug
+  #     version: "^1.0.0"
+  #   mcp_server: "https://..."
+  #   mcp_type: sse
+  #   version: "1.0.0"
+  #   tags: [example]
+  #   risk_level: low
+  #   requires_auth: false

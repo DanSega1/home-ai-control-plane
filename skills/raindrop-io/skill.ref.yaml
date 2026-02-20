@@ -1,0 +1,42 @@
+# Skill Reference – raindrop-io
+#
+# This file is the local record for the raindrop-io skill.
+# The authoritative source is the linked GitHub repository.
+# Do NOT inline the SKILL.md here – it is fetched at runtime from `source.repo`.
+#
+# GitHub: https://github.com/DanSega1/raindrop-io-skill
+
+skill_id: raindrop-io
+repo: https://github.com/DanSega1/raindrop-io-skill
+skillstore_url: https://skillstore.io/skills/raindrop-io   # when published
+pinned_version: "1.0.0"
+
+# Human-readable capability summary (used by the Planner to decide when to pick this skill)
+capabilities:
+  - Save URLs as bookmarks with tags and collection assignment
+  - Search bookmarks by keyword, tag, domain, or date range
+  - Manage reading lists (add, mark read, track highlights)
+  - Organize research into collections with tag taxonomies
+  - Bulk tag and move bookmarks across collections
+  - List, rename, and consolidate tags
+  - Delete bookmarks (requires high approval tier)
+
+# Risk mapping for OPA policies
+risk_defaults:
+  read:   low
+  write:  low
+  delete: high
+
+# MCP server this skill connects to
+mcp_server: "https://api.raindrop.io/rest/v2/ai/mcp"
+mcp_type: sse
+requires_pro: true
+
+# Auth configuration
+auth:
+  type: bearer
+  env: RAINDROP_MCP_TOKEN    # set in config/.env.skill-runner
+
+# Changelog (local tracking; full history in the upstream repo)
+changelog:
+  "1.0.0": "Initial release – bookmarks, search, reading list, collections"
