@@ -10,14 +10,13 @@ import future.keywords.in
 default allow = false
 
 # ---------------------------------------------------------------------------
-# Skill registry – allowed skills and their risk levels
+# Skill registry – registered skills and their risk profiles.
+# Skill IDs match skills/registry.yaml.
+# Destructive = true means the skill CAN perform deletes/writes with side-effects.
 # ---------------------------------------------------------------------------
 
 skill_registry := {
-    "raindrop-io:bookmark_add":    {"risk": "low",    "destructive": false},
-    "raindrop-io:bookmark_delete": {"risk": "high",   "destructive": true},
-    "raindrop-io:collection_list": {"risk": "low",    "destructive": false},
-    "raindrop-io:bookmark_search": {"risk": "low",    "destructive": false},
+    "raindrop-io": {"risk": "low", "destructive": true},
 }
 
 # ---------------------------------------------------------------------------
@@ -25,8 +24,8 @@ skill_registry := {
 # ---------------------------------------------------------------------------
 
 agent_skill_permissions := {
-    "planner":    {"raindrop-io:bookmark_add", "raindrop-io:collection_list", "raindrop-io:bookmark_search"},
-    "supervisor": {"raindrop-io:bookmark_add", "raindrop-io:bookmark_delete", "raindrop-io:collection_list", "raindrop-io:bookmark_search"},
+    "planner":    {"raindrop-io"},
+    "supervisor": {"raindrop-io"},
 }
 
 # ---------------------------------------------------------------------------
@@ -36,7 +35,7 @@ agent_skill_permissions := {
 allow if {
     skill_known
     agent_permitted
-    not destructive_without_approval
+    not high_risk_without_approval
 }
 
 # ---------------------------------------------------------------------------
@@ -51,8 +50,10 @@ agent_permitted if {
     input.skill in agent_skill_permissions[input.agent]
 }
 
-destructive_without_approval if {
+# Destructive skills require the task to be fully approved
+high_risk_without_approval if {
     skill_registry[input.skill].destructive == true
+    input.plan_risk_level in {"high", "critical"}
     input.task_status != "approved"
 }
 
@@ -62,18 +63,18 @@ destructive_without_approval if {
 
 deny_reason := msg if {
     not skill_known
-    msg := sprintf("unknown skill: %v", [input.skill])
+    msg := sprintf("skill '%v' is not in the registry", [input.skill])
 }
 
 deny_reason := msg if {
     skill_known
     not agent_permitted
-    msg := sprintf("agent %v is not permitted to call skill %v", [input.agent, input.skill])
+    msg := sprintf("agent '%v' is not permitted to use skill '%v'", [input.agent, input.skill])
 }
 
 deny_reason := msg if {
     skill_known
     agent_permitted
-    destructive_without_approval
-    msg := sprintf("skill %v is destructive and requires task status 'approved'", [input.skill])
+    high_risk_without_approval
+    msg := sprintf("skill '%v' with risk level '%v' requires task status 'approved'", [input.skill, input.plan_risk_level])
 }
