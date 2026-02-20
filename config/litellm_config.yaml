@@ -1,0 +1,27 @@
+# LiteLLM Proxy Configuration – Phase 1
+# https://docs.litellm.ai/docs/proxy/configs
+
+model_list:
+  - model_name: gpt-4o-mini
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: gpt-4o
+    litellm_params:
+      model: openai/gpt-4o
+      api_key: os.environ/OPENAI_API_KEY
+
+litellm_settings:
+  # Budget guardrails – hard limits at the proxy level
+  max_budget: 10          # USD per month
+  budget_duration: 1mo
+  drop_params: true       # silently drop unsupported params
+
+router_settings:
+  routing_strategy: simple-shuffle
+  num_retries: 2
+  timeout: 60
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
