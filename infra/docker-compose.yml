@@ -103,6 +103,9 @@ services:
       dockerfile: services/skill-runner/Dockerfile
     container_name: homeai-skill-runner
     restart: unless-stopped
+    volumes:
+      # Mount the skills registry so new skills can be added without rebuilding
+      - ../skills:/app/skills:ro
     env_file:
       - ../config/.env.skill-runner
     ports:
