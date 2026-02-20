@@ -52,10 +52,11 @@ class RiskLevel(str, Enum):
 class ExecutionStep(BaseModel):
     """A single step inside a planner-generated execution plan."""
     step_id: str = Field(default_factory=lambda: str(uuid4()))
-    skill: str                          # e.g. "raindrop-io:bookmark_add"
-    action: str                         # human-readable description
-    parameters: Dict[str, Any] = {}
-    depends_on: List[str] = []          # step_ids this step depends on
+    skill: str                              # skill_id in registry.yaml – e.g. "raindrop-io"
+    action: str                             # human-readable summary of what this step does
+    instruction: str = ""                   # natural language instruction passed to the skill executor
+    context: Dict[str, Any] = {}            # optional structured context for the instruction
+    depends_on: List[str] = []              # step_ids this step depends on
     estimated_tokens: int = 0
     reversible: bool = True
 
