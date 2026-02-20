@@ -3,15 +3,17 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # Install deps first for layer caching
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Build context is the project root (see infra/docker-compose.yml)
+COPY constraints.txt .
+COPY services/supervisor/requirements.txt .
+RUN pip install --no-cache-dir -c constraints.txt -r requirements.txt
 
 # Copy shared contracts
-COPY ../../contracts /app/contracts
+COPY contracts /app/contracts
 
 # Copy service source
-COPY app/ /app/app/
-COPY main.py /app/
+COPY services/supervisor/app/ /app/app/
+COPY services/supervisor/main.py /app/
 
 EXPOSE 8000
 

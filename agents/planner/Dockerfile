@@ -2,14 +2,16 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Build context is the project root (see infra/docker-compose.yml)
+COPY constraints.txt .
+COPY agents/planner/requirements.txt .
+RUN pip install --no-cache-dir -c constraints.txt -r requirements.txt
 
 # Shared contracts
-COPY ../../contracts /app/contracts
+COPY contracts /app/contracts
 
-COPY app/ /app/app/
-COPY main.py /app/
+COPY agents/planner/app/ /app/app/
+COPY agents/planner/main.py /app/
 
 EXPOSE 8001
 

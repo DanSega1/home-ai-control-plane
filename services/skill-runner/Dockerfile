@@ -2,13 +2,15 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Build context is the project root (see infra/docker-compose.yml)
+COPY constraints.txt .
+COPY services/skill-runner/requirements.txt .
+RUN pip install --no-cache-dir -c constraints.txt -r requirements.txt
 
-COPY ../../contracts /app/contracts
+COPY contracts /app/contracts
 
-COPY app/ /app/app/
-COPY main.py /app/
+COPY services/skill-runner/app/ /app/app/
+COPY services/skill-runner/main.py /app/
 
 # skills/ is mounted at runtime via docker-compose volume (../skills:/app/skills:ro)
 # so the registry.yaml and skill.ref.yaml files are always up-to-date without rebuilds.
