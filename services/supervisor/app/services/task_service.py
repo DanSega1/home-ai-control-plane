@@ -7,6 +7,7 @@ Lifecycle:
   3. approve / reject    → status=APPROVED / REJECTED  (triggered by NotionSync polling)
   4. execute_task        → OPA check → Skill Runner, status=EXECUTING → COMPLETED / FAILED
 """
+import asyncio
 import logging
 from datetime import datetime, timezone
 from typing import List
@@ -137,12 +138,15 @@ async def plan_task(task: Task) -> Task:
         if task.approval_tier == ApprovalTier.LOW and plan.risk_level in ("low",):
             task.status = TaskStatus.APPROVED
             await _audit(task, "supervisor", "auto_approved", "low tier / low risk")
+            await _save(task)
+            log.info("Task %s plan generated, status=%s", task.task_id, task.status)
+            # Fire execution immediately in the background
+            asyncio.create_task(execute_task(task.task_id))
         else:
             task.status = TaskStatus.AWAITING_APPROVAL
             await _audit(task, "supervisor", "awaiting_approval")
-
-        await _save(task)
-        log.info("Task %s plan generated, status=%s", task.task_id, task.status)
+            await _save(task)
+            log.info("Task %s plan generated, status=%s", task.task_id, task.status)
 
     except Exception as exc:
         log.error("Planning failed for task %s: %s", task.task_id, exc)
