@@ -15,12 +15,12 @@ from contracts.task import CreateTaskRequest, Task, TaskStatusResponse
 router = APIRouter(tags=["tasks"])
 
 
-@router.post("/", response_model=Task, status_code=201)
+@router.post("", response_model=Task, status_code=201)
 async def create(req: CreateTaskRequest) -> Task:
     return await create_task(req)
 
 
-@router.get("/", response_model=List[Task])
+@router.get("", response_model=List[Task])
 async def list_(
     status: Optional[str] = Query(None),
     limit: int = Query(50, ge=1, le=200),
