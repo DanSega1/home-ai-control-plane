@@ -128,12 +128,17 @@ class MCPClient:
         tools = await self.list_tools()
         result = []
         for t in tools:
+            schema = t.get("inputSchema", {"type": "object", "properties": {}})
+            # OpenAI requires 'properties' to be present on any object-type schema
+            if isinstance(schema, dict) and schema.get("type") == "object":
+                schema = dict(schema)
+                schema.setdefault("properties", {})
             result.append({
                 "type": "function",
                 "function": {
                     "name": t["name"],
                     "description": t.get("description", ""),
-                    "parameters": t.get("inputSchema", {"type": "object", "properties": {}}),
+                    "parameters": schema,
                 },
             })
         return result
