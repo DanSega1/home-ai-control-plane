@@ -88,13 +88,15 @@ async def execute_instruction(skill_id: str, instruction: str, context: Dict[str
                 choice = response.choices[0]
                 msg = choice.message
 
+                tool_calls = getattr(msg, "tool_calls", None) or []
+
                 # Append assistant message to history
                 messages.append({"role": "assistant", "content": msg.content or "", "tool_calls": [
                     {"id": tc.id, "type": "function", "function": {"name": tc.function.name, "arguments": tc.function.arguments}}
-                    for tc in (msg.tool_calls or [])
+                    for tc in tool_calls
                 ]})
 
-                if not msg.tool_calls:
+                if not tool_calls:
                     # Final answer – no more tool calls
                     return {
                         "success": True,
@@ -105,7 +107,7 @@ async def execute_instruction(skill_id: str, instruction: str, context: Dict[str
                     }
 
                 # 6. Execute MCP tool calls
-                for tc in msg.tool_calls:
+                for tc in tool_calls:
                     fn_name = tc.function.name
                     try:
                         fn_args = json.loads(tc.function.arguments)
