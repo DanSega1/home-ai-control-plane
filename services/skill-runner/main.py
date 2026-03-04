@@ -4,8 +4,8 @@ import logging
 from fastapi import FastAPI
 
 from app.routes.execute import router as execute_router
-from app.skill_loader import list_skills, prefetch_all
-from app.registry import list_skills as registry_list
+from app.skill_loader import prefetch_all
+from app.registry import list_skills
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("skill-runner")
@@ -30,4 +30,4 @@ async def skills() -> dict:
 async def startup() -> None:
     log.info("Skill Runner starting – warming skill cache...")
     await prefetch_all()
-    log.info("Skill Runner ready. Registered skills: %s", registry_list())
+    log.info("Skill Runner ready. Registered skills: %s", list_skills())

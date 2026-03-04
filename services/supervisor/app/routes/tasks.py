@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
+from pydantic import BaseModel
 
 from app.services.task_service import (
     create_task,
@@ -57,3 +58,23 @@ async def reject(task_id: str) -> Task:
     if not task:
         raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
     return task
+
+
+class PatchTaskRequest(BaseModel):
+    notion_page_id: Optional[str] = None
+
+
+@router.patch("/{task_id}", response_model=Task)
+async def patch(task_id: str, req: PatchTaskRequest) -> Task:
+    """Partial update – used by notion-sync to write back the Notion page ID."""
+    from app.db import get_db
+    from datetime import datetime, timezone
+    db = get_db()
+    update: dict = {"updated_at": datetime.now(tz=timezone.utc).isoformat()}
+    if req.notion_page_id is not None:
+        update["notion_page_id"] = req.notion_page_id
+    result = await db["tasks"].update_one({"task_id": task_id}, {"$set": update})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+    doc = await db["tasks"].find_one({"task_id": task_id})
+    return Task(**doc)
