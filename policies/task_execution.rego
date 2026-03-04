@@ -72,18 +72,19 @@ requires_unapproved_destructive if {
 # Deny reasons (useful for debugging / audit)
 # ---------------------------------------------------------------------------
 
-deny_reasons := reasons if {
-    reasons := [r |
-        task_blocked
-        r := sprintf("task is in terminal state: %v", [input.current_status])
-    ] | [r |
-        budget_exceeded
-        r := "monthly budget limit exceeded"
-    ] | [r |
-        requires_unapproved_destructive
-        r := sprintf("risk level %v requires human approval", [input.plan.risk_level])
-    ] | [r |
-        not valid_status_transition
-        r := sprintf("invalid status transition: %v -> %v", [input.current_status, input.requested_status])
-    ]
-}
+_reason_terminal := [sprintf("task is in terminal state: %v", [input.current_status])] if task_blocked
+_reason_terminal := [] if not task_blocked
+
+_reason_budget := ["monthly budget limit exceeded"] if budget_exceeded
+_reason_budget := [] if not budget_exceeded
+
+_reason_destructive := [sprintf("risk level %v requires human approval", [input.plan.risk_level])] if requires_unapproved_destructive
+_reason_destructive := [] if not requires_unapproved_destructive
+
+_reason_transition := [sprintf("invalid status transition: %v -> %v", [input.current_status, input.requested_status])] if not valid_status_transition
+_reason_transition := [] if valid_status_transition
+
+deny_reasons := array.concat(
+    array.concat(_reason_terminal, _reason_budget),
+    array.concat(_reason_destructive, _reason_transition)
+)
