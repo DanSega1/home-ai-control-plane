@@ -33,7 +33,7 @@ agent_skill_permissions := {
 # ---------------------------------------------------------------------------
 
 allow if {
-    skill_known
+    is_skill_known
     agent_permitted
     not high_risk_without_approval
 }
@@ -42,7 +42,7 @@ allow if {
 # Guards
 # ---------------------------------------------------------------------------
 
-skill_known if {
+is_skill_known if {
     skill_registry[input.skill]
 }
 
@@ -62,18 +62,18 @@ high_risk_without_approval if {
 # ---------------------------------------------------------------------------
 
 deny_reason := msg if {
-    not skill_known
+    not is_skill_known
     msg := sprintf("skill '%v' is not in the registry", [input.skill])
 }
 
 deny_reason := msg if {
-    skill_known
+    is_skill_known
     not agent_permitted
     msg := sprintf("agent '%v' is not permitted to use skill '%v'", [input.agent, input.skill])
 }
 
 deny_reason := msg if {
-    skill_known
+    is_skill_known
     agent_permitted
     high_risk_without_approval
     msg := sprintf("skill '%v' with risk level '%v' requires task status 'approved'", [input.skill, input.plan_risk_level])
