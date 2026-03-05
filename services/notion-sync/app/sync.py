@@ -7,6 +7,7 @@ Every poll_interval_seconds:
   2. Ask Notion for pages with status Approved or Rejected
      → call Supervisor approve/reject endpoint.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -88,16 +89,14 @@ async def _sync_approvals_from_notion() -> None:
 
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
-                resp = await client.post(
-                    f"{settings.supervisor_url}/tasks/{task_id}/{endpoint}"
-                )
+                resp = await client.post(f"{settings.supervisor_url}/tasks/{task_id}/{endpoint}")
                 resp.raise_for_status()
 
             _processed_approvals.add(task_id)
             log.info("Task %s %s via Notion", task_id, endpoint + "d")
 
             # Update page to reflect the system processed it
-            final_status = "Processing" if endpoint == "approve" else "Rejected – Processed"
+            final_status = "Processing" if endpoint == "approve" else "Rejected - Processed"
             await update_page_status(item["page_id"], final_status)
 
         except Exception as exc:

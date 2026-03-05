@@ -5,11 +5,12 @@ Calls an LLM via LiteLLM and produces a structured ExecutionPlan.
 The LLM is prompted with a system message that describes available skills
 and asked to return a JSON plan conforming to the ExecutionPlan schema.
 """
+
 from __future__ import annotations
 
 import json
 import logging
-from typing import Any, Dict
+from typing import Any
 
 import litellm
 
@@ -32,7 +33,7 @@ You do NOT call specific API functions — you write natural language instructio
 
 | Skill ID     | Capability                                                         | Risk    |
 |--------------|--------------------------------------------------------------------|---------|
-| raindrop-io  | Manage bookmarks: save, search, organize collections, reading list | low–high |
+| raindrop-io  | Manage bookmarks: save, search, organize collections, reading list | low-high |
 
 ### raindrop-io capabilities:
 - Save a URL to a collection with tags
@@ -40,7 +41,7 @@ You do NOT call specific API functions — you write natural language instructio
 - List collections
 - Manage reading lists (add, mark read, highlights)
 - Organize research collections with bulk tagging
-- Delete bookmarks (HIGH RISK – requires approval)
+- Delete bookmarks (HIGH RISK - requires approval)
 
 ## Output Format
 
@@ -50,7 +51,7 @@ Respond ONLY with a single valid JSON object matching this schema:
     {
       "skill": "<skill_id>",
       "action": "<one-line summary of what this step does>",
-      "instruction": "<natural language instruction for the skill – be specific and complete>",
+      "instruction": "<natural language instruction for the skill - be specific and complete>",
       "depends_on": [],
       "estimated_tokens": <int>,
       "reversible": <bool>
@@ -74,7 +75,7 @@ Respond ONLY with a single valid JSON object matching this schema:
 """
 
 
-async def generate_plan(task_id: str, title: str, description: str) -> Dict[str, Any]:
+async def generate_plan(task_id: str, title: str, description: str) -> dict[str, Any]:
     """
     Call LiteLLM and return a dict with keys: plan, tokens_used, model.
     """
@@ -105,15 +106,19 @@ async def generate_plan(task_id: str, title: str, description: str) -> Dict[str,
     # Build and validate through Pydantic
     steps = []
     for s in plan_dict.get("steps", []):
-        steps.append(ExecutionStep(
-            skill=s.get("skill", ""),
-            action=s.get("action", ""),
-            instruction=s.get("instruction", s.get("action", "")),  # fallback to action if missing
-            context=s.get("context", {}),
-            depends_on=s.get("depends_on", []),
-            estimated_tokens=s.get("estimated_tokens", 0),
-            reversible=s.get("reversible", True),
-        ))
+        steps.append(
+            ExecutionStep(
+                skill=s.get("skill", ""),
+                action=s.get("action", ""),
+                instruction=s.get(
+                    "instruction", s.get("action", "")
+                ),  # fallback to action if missing
+                context=s.get("context", {}),
+                depends_on=s.get("depends_on", []),
+                estimated_tokens=s.get("estimated_tokens", 0),
+                reversible=s.get("reversible", True),
+            )
+        )
     plan = ExecutionPlan(
         steps=steps,
         estimated_total_tokens=plan_dict.get("estimated_total_tokens", 0),

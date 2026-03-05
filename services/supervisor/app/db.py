@@ -1,4 +1,5 @@
 """MongoDB async client (motor)."""
+
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
 from app.config import settings
@@ -25,5 +26,5 @@ async def close_mongo() -> None:
 
 def get_db() -> AsyncIOMotorDatabase:
     if _db is None:
-        raise RuntimeError("MongoDB not initialised – call init_mongo() first.")
+        raise RuntimeError("MongoDB not initialised - call init_mongo() first.")
     return _db

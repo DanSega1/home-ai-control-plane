@@ -11,9 +11,9 @@ as NOTION_TASKS_DATABASE_ID.
 Requirements:
     pip install httpx python-dotenv
 """
+
 from __future__ import annotations
 
-import json
 import os
 import sys
 
@@ -33,18 +33,10 @@ def headers(api_key: str) -> dict:
 
 DATABASE_SCHEMA = {
     # ---- Required title property (Notion mandates exactly one) ----
-    "Name": {
-        "title": {}
-    },
-
+    "Name": {"title": {}},
     # ---- Plain-text fields ----
-    "Task ID": {
-        "rich_text": {}
-    },
-    "Description": {
-        "rich_text": {}
-    },
-
+    "Task ID": {"rich_text": {}},
+    "Description": {"rich_text": {}},
     # ---- Status of the approval workflow ----
     # Values the notion-sync service reads/writes:
     #   "Awaiting Approval" → pushed by the sync service, awaiting human decision
@@ -57,23 +49,22 @@ DATABASE_SCHEMA = {
         "select": {
             "options": [
                 {"name": "Awaiting Approval", "color": "yellow"},
-                {"name": "Approved",          "color": "green"},
-                {"name": "Rejected",          "color": "red"},
-                {"name": "Processing",        "color": "blue"},
-                {"name": "Completed",         "color": "purple"},
-                {"name": "Failed",            "color": "gray"},
+                {"name": "Approved", "color": "green"},
+                {"name": "Rejected", "color": "red"},
+                {"name": "Processing", "color": "blue"},
+                {"name": "Completed", "color": "purple"},
+                {"name": "Failed", "color": "gray"},
             ]
         }
     },
-
     # ---- Risk / urgency tier set by the planner agent ----
     # Maps 1:1 to contracts.task.ApprovalTier
     "Approval Tier": {
         "select": {
             "options": [
-                {"name": "Low",      "color": "green"},
-                {"name": "Medium",   "color": "yellow"},
-                {"name": "High",     "color": "orange"},
+                {"name": "Low", "color": "green"},
+                {"name": "Medium", "color": "yellow"},
+                {"name": "High", "color": "orange"},
                 {"name": "Critical", "color": "red"},
             ]
         }
@@ -127,9 +118,9 @@ def main() -> None:
     db = create_database(api_key, parent_page_id)
     db_id = db["id"]
 
-    print(f"\n✅  Database created!")
+    print("\n✅  Database created!")
     print(f"\n    DATABASE_ID = {db_id}")
-    print(f"\nAdd this to config/.env.notion-sync:")
+    print("\nAdd this to config/.env.notion-sync:")
     print(f"\n    NOTION_TASKS_DATABASE_ID={db_id}\n")
 
 

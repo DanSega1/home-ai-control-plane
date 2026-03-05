@@ -2,10 +2,11 @@
 Thin async wrapper around the Notion API v1.
 https://developers.notion.com/reference/intro
 """
+
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import httpx
 
@@ -17,7 +18,7 @@ NOTION_API = "https://api.notion.com/v1"
 NOTION_VERSION = "2022-06-28"
 
 
-def _headers() -> Dict[str, str]:
+def _headers() -> dict[str, str]:
     return {
         "Authorization": f"Bearer {settings.notion_api_key}",
         "Notion-Version": NOTION_VERSION,
@@ -28,6 +29,7 @@ def _headers() -> Dict[str, str]:
 # ---------------------------------------------------------------------------
 # Pages / tasks
 # ---------------------------------------------------------------------------
+
 
 async def create_task_page(task_id: str, title: str, description: str, approval_tier: str) -> str:
     """Create a Notion page in the tasks DB. Returns the Notion page ID."""
@@ -58,7 +60,7 @@ async def create_task_page(task_id: str, title: str, description: str, approval_
     return page_id
 
 
-async def get_page_status(page_id: str) -> Optional[str]:
+async def get_page_status(page_id: str) -> str | None:
     """Fetch the Status select value of a Notion page."""
     async with httpx.AsyncClient(timeout=15.0) as client:
         resp = await client.get(f"{NOTION_API}/pages/{page_id}", headers=_headers())
@@ -70,7 +72,7 @@ async def get_page_status(page_id: str) -> Optional[str]:
     return select.get("name") if select else None
 
 
-async def query_awaiting_approval_tasks() -> List[Dict[str, Any]]:
+async def query_awaiting_approval_tasks() -> list[dict[str, Any]]:
     """
     Query the Notion DB for pages that have been manually set to
     'Approved' or 'Rejected' so we can propagate the decision.
@@ -99,11 +101,13 @@ async def query_awaiting_approval_tasks() -> List[Dict[str, Any]]:
         task_id_prop = props.get("Task ID", {}).get("rich_text", [])
         status_prop = props.get("Status", {}).get("select", {})
         if task_id_prop:
-            results.append({
-                "page_id": page["id"],
-                "task_id": task_id_prop[0]["text"]["content"],
-                "notion_status": status_prop.get("name", ""),
-            })
+            results.append(
+                {
+                    "page_id": page["id"],
+                    "task_id": task_id_prop[0]["text"]["content"],
+                    "notion_status": status_prop.get("name", ""),
+                }
+            )
     return results
 
 
@@ -111,8 +115,6 @@ async def update_page_status(page_id: str, status: str) -> None:
     """Update the Status property of a Notion page."""
     payload = {"properties": {"Status": {"select": {"name": status}}}}
     async with httpx.AsyncClient(timeout=15.0) as client:
-        resp = await client.patch(
-            f"{NOTION_API}/pages/{page_id}", headers=_headers(), json=payload
-        )
+        resp = await client.patch(f"{NOTION_API}/pages/{page_id}", headers=_headers(), json=payload)
         resp.raise_for_status()
     log.info("Notion page %s status updated to %s", page_id, status)

@@ -1,18 +1,18 @@
 """
-Skill Loader – fetches and caches SKILL.md from external sources.
+Skill Loader - fetches and caches SKILL.md from external sources.
 
 Supported source types:
-    github    – raw.githubusercontent.com (public) or GitHub API (private)
-    skillstore – skillstore.io REST API
-    local     – local filesystem path (dev/testing)
+    github    - raw.githubusercontent.com (public) or GitHub API (private)
+    skillstore - skillstore.io REST API
+    local     - local filesystem path (dev/testing)
 """
+
 from __future__ import annotations
 
-import hashlib
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import frontmatter
 import httpx
@@ -26,10 +26,10 @@ log = logging.getLogger("skill-runner.loader")
 # Registry
 # ---------------------------------------------------------------------------
 
-_registry: Dict[str, Dict[str, Any]] = {}
+_registry: dict[str, dict[str, Any]] = {}
 
 
-def load_registry() -> Dict[str, Dict[str, Any]]:
+def load_registry() -> dict[str, dict[str, Any]]:
     """Parse skills/registry.yaml and return the skills dict."""
     path = Path(settings.skills_registry_path)
     if not path.exists():
@@ -40,7 +40,7 @@ def load_registry() -> Dict[str, Dict[str, Any]]:
     return data.get("skills", {})
 
 
-def get_registry() -> Dict[str, Dict[str, Any]]:
+def get_registry() -> dict[str, dict[str, Any]]:
     """Return (and lazy-init) the global registry."""
     global _registry
     if not _registry:
@@ -52,8 +52,8 @@ def get_registry() -> Dict[str, Dict[str, Any]]:
 # SKILL.md cache
 # ---------------------------------------------------------------------------
 
-_skill_cache: Dict[str, str] = {}   # skill_id → SKILL.md content
-_skill_meta: Dict[str, Dict[str, Any]] = {}  # skill_id → parsed frontmatter metadata
+_skill_cache: dict[str, str] = {}  # skill_id → SKILL.md content
+_skill_meta: dict[str, dict[str, Any]] = {}  # skill_id → parsed frontmatter metadata
 
 
 def _cache_path(skill_id: str) -> Path:
@@ -63,13 +63,13 @@ def _cache_path(skill_id: str) -> Path:
     return cache_dir / f"{safe_id}.SKILL.md"
 
 
-async def _fetch_github(skill_id: str, source: Dict[str, Any]) -> str:
+async def _fetch_github(skill_id: str, source: dict[str, Any]) -> str:
     repo = source["repo"]
     ref = source.get("ref", "main")
     skill_file = source.get("skill_file", "SKILL.md")
     url = f"https://raw.githubusercontent.com/{repo}/{ref}/{skill_file}"
 
-    headers: Dict[str, str] = {}
+    headers: dict[str, str] = {}
     if settings.github_token:
         headers["Authorization"] = f"token {settings.github_token}"
 
@@ -80,7 +80,7 @@ async def _fetch_github(skill_id: str, source: Dict[str, Any]) -> str:
         return resp.text
 
 
-async def _fetch_skillstore(skill_id: str, source: Dict[str, Any]) -> str:
+async def _fetch_skillstore(skill_id: str, source: dict[str, Any]) -> str:
     """Fetch SKILL.md from skillstore.io."""
     slug = source.get("skill_id", skill_id)
     version = source.get("version", "latest")
@@ -93,7 +93,7 @@ async def _fetch_skillstore(skill_id: str, source: Dict[str, Any]) -> str:
         return resp.text
 
 
-def _fetch_local(skill_id: str, source: Dict[str, Any]) -> str:
+def _fetch_local(skill_id: str, source: dict[str, Any]) -> str:
     path = Path(source["path"])
     if not path.exists():
         raise FileNotFoundError(f"Local skill file not found: {path}")
@@ -138,7 +138,7 @@ async def fetch_skill(skill_id: str) -> str:
     return content
 
 
-def get_skill_metadata(skill_id: str) -> Dict[str, Any]:
+def get_skill_metadata(skill_id: str) -> dict[str, Any]:
     """Parse the SKILL.md frontmatter for a cached skill."""
     if skill_id in _skill_meta:
         return _skill_meta[skill_id]

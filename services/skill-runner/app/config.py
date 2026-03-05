@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     # Local directory where fetched SKILL.md files are cached
     skill_cache_dir: str = "/tmp/skill-cache"
 
-    # GitHub – for fetching skills from public/private repos
+    # GitHub - for fetching skills from public/private repos
     # Leave empty for unauthenticated (lower rate limit, fine for few repos)
     github_token: str = ""
 
@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     litellm_api_key: str = "sk-placeholder"
     execution_model: str = "gpt-4o-mini"
 
-    # MCP auth tokens – one env var per skill, keyed by SKILL_ID_MCP_TOKEN pattern
+    # MCP auth tokens - one env var per skill, keyed by SKILL_ID_MCP_TOKEN pattern
     # e.g. RAINDROP_IO_MCP_TOKEN  (hyphens replaced with underscores, uppercased)
     raindrop_io_mcp_token: str = ""
 

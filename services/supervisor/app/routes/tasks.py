@@ -1,4 +1,4 @@
-from typing import List, Optional
+from datetime import UTC
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
@@ -10,7 +10,7 @@ from app.services.task_service import (
     list_tasks,
     update_task_approval,
 )
-from contracts.task import CreateTaskRequest, Task, TaskStatusResponse
+from contracts.task import CreateTaskRequest, Task
 
 router = APIRouter(tags=["tasks"])
 
@@ -20,11 +20,11 @@ async def create(req: CreateTaskRequest) -> Task:
     return await create_task(req)
 
 
-@router.get("", response_model=List[Task])
+@router.get("", response_model=list[Task])
 async def list_(
-    status: Optional[str] = Query(None),
+    status: str | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
-) -> List[Task]:
+) -> list[Task]:
     return await list_tasks(status=status, limit=limit)
 
 
@@ -41,7 +41,7 @@ async def execute(task_id: str) -> Task:
     try:
         return await execute_task(task_id)
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.post("/{task_id}/approve", response_model=Task)
@@ -61,16 +61,18 @@ async def reject(task_id: str) -> Task:
 
 
 class PatchTaskRequest(BaseModel):
-    notion_page_id: Optional[str] = None
+    notion_page_id: str | None = None
 
 
 @router.patch("/{task_id}", response_model=Task)
 async def patch(task_id: str, req: PatchTaskRequest) -> Task:
-    """Partial update – used by notion-sync to write back the Notion page ID."""
+    """Partial update - used by notion-sync to write back the Notion page ID."""
+    from datetime import datetime
+
     from app.db import get_db
-    from datetime import datetime, timezone
+
     db = get_db()
-    update: dict = {"updated_at": datetime.now(tz=timezone.utc).isoformat()}
+    update: dict = {"updated_at": datetime.now(tz=UTC).isoformat()}
     if req.notion_page_id is not None:
         update["notion_page_id"] = req.notion_page_id
     result = await db["tasks"].update_one({"task_id": task_id}, {"$set": update})

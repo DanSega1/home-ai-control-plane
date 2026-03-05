@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     # Notion
     notion_api_key: str = ""
-    notion_tasks_database_id: str = ""   # ID of the Kanban DB in Notion
+    notion_tasks_database_id: str = ""  # ID of the Kanban DB in Notion
 
     # Supervisor
     supervisor_url: str = "http://supervisor:8000"

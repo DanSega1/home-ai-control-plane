@@ -1,19 +1,20 @@
 """
-Execution route – receives a plan, runs steps sequentially respecting depends_on,
+Execution route - receives a plan, runs steps sequentially respecting depends_on,
 returns a TaskResult.
 
 Each ExecutionStep now carries:
-    skill    – skill_id in the registry (e.g. "raindrop-io")
-    action   – human-readable summary
-    instruction – natural language instruction passed to the skill's SKILL.md context
+    skill    - skill_id in the registry (e.g. "raindrop-io")
+    action   - human-readable summary
+    instruction - natural language instruction passed to the skill's SKILL.md context
 
 The Skill Executor drives an LLM + MCP tool loop per step.
 """
+
 import logging
 import time
-from typing import Any, Dict, List
+from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from pydantic import BaseModel
 
 from app.registry import skill_exists
@@ -26,7 +27,7 @@ router = APIRouter(tags=["execution"])
 
 class ExecuteRequest(BaseModel):
     task_id: str
-    plan: Dict[str, Any]
+    plan: dict[str, Any]
 
 
 @router.post("/execute", response_model=TaskResult)
@@ -34,7 +35,7 @@ async def execute(req: ExecuteRequest) -> TaskResult:
     start = time.time()
     plan = ExecutionPlan(**req.plan)
 
-    step_outputs: Dict[str, Any] = {}
+    step_outputs: dict[str, Any] = {}
     completed_ids: set = set()
     total_tokens = 0
 
@@ -52,7 +53,7 @@ async def execute(req: ExecuteRequest) -> TaskResult:
             )
 
         progress = False
-        remaining: List = []
+        remaining: list = []
 
         for step in pending:
             if not all(dep in completed_ids for dep in step.depends_on):
@@ -68,14 +69,24 @@ async def execute(req: ExecuteRequest) -> TaskResult:
                 )
 
             # Build the instruction for this step
-            instruction = step.instruction if hasattr(step, "instruction") and step.instruction else step.action
+            instruction = (
+                step.instruction
+                if hasattr(step, "instruction") and step.instruction
+                else step.action
+            )
             if step_outputs:
                 # Provide previous step context so the skill can refer to prior results
                 context = {"previous_step_outputs": step_outputs}
             else:
                 context = None
 
-            log.info("Task %s – step %s (%s): %s", req.task_id, step.step_id, step.skill, instruction[:80])
+            log.info(
+                "Task %s - step %s (%s): %s",
+                req.task_id,
+                step.step_id,
+                step.skill,
+                instruction[:80],
+            )
 
             result = await execute_instruction(step.skill, instruction, context)
             total_tokens += result.get("tokens_used", 0)

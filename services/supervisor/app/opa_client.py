@@ -1,6 +1,7 @@
 """Thin async wrapper around the OPA REST API."""
+
 import logging
-from typing import Any, Dict, Tuple
+from typing import Any
 
 import httpx
 
@@ -9,7 +10,7 @@ from app.config import settings
 log = logging.getLogger("supervisor.opa")
 
 
-async def evaluate(policy_path: str, input_data: Dict[str, Any]) -> Tuple[bool, Any]:
+async def evaluate(policy_path: str, input_data: dict[str, Any]) -> tuple[bool, Any]:
     """
     Call OPA and return (allowed: bool, result: Any).
 
@@ -30,17 +31,17 @@ async def evaluate(policy_path: str, input_data: Dict[str, Any]) -> Tuple[bool, 
             return bool(result), result
     except httpx.HTTPError as exc:
         log.error("OPA request failed: %s", exc)
-        # Fail closed – deny if OPA is unreachable
+        # Fail closed - deny if OPA is unreachable
         return False, None
 
 
-async def check_task_execution(input_data: Dict[str, Any]) -> Tuple[bool, Any]:
+async def check_task_execution(input_data: dict[str, Any]) -> tuple[bool, Any]:
     return await evaluate("homeai/task/allow", input_data)
 
 
-async def check_budget(input_data: Dict[str, Any]) -> Tuple[bool, Any]:
+async def check_budget(input_data: dict[str, Any]) -> tuple[bool, Any]:
     return await evaluate("homeai/budget/allow", input_data)
 
 
-async def check_skill_access(input_data: Dict[str, Any]) -> Tuple[bool, Any]:
+async def check_skill_access(input_data: dict[str, Any]) -> tuple[bool, Any]:
     return await evaluate("homeai/skill/allow", input_data)

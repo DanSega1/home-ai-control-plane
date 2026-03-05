@@ -1,8 +1,9 @@
 """
-Home AI Control Plane – Notion Sync
+Home AI Control Plane - Notion Sync
 Polls the Supervisor for tasks needing Notion cards,
 and polls Notion for approval status changes.
 """
+
 import asyncio
 import logging
 
@@ -14,7 +15,9 @@ from app.sync import run_sync_loop
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("notion-sync")
 
-app = FastAPI(title="Home AI – Notion Sync", version="0.1.0")
+app = FastAPI(title="Home AI - Notion Sync", version="0.1.0")
+
+_background_tasks: set[asyncio.Task] = set()
 
 
 @app.get("/health")
@@ -24,5 +27,7 @@ async def health() -> dict:
 
 @app.on_event("startup")
 async def startup() -> None:
-    log.info("Notion Sync starting – poll interval %ds", settings.poll_interval_seconds)
-    asyncio.create_task(run_sync_loop())
+    log.info("Notion Sync starting - poll interval %ds", settings.poll_interval_seconds)
+    task = asyncio.create_task(run_sync_loop())
+    _background_tasks.add(task)
+    task.add_done_callback(_background_tasks.discard)

@@ -17,4 +17,4 @@ async def plan(req: PlanRequest) -> dict:
     try:
         return await generate_plan(req.task_id, req.title, req.description)
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=500, detail=str(exc)) from exc

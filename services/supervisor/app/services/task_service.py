@@ -7,16 +7,17 @@ Lifecycle:
   3. approve / reject    → status=APPROVED / REJECTED  (triggered by NotionSync polling)
   4. execute_task        → OPA check → Skill Runner, status=EXECUTING → COMPLETED / FAILED
 """
+
 import asyncio
+from datetime import UTC, datetime
 import logging
-from datetime import datetime, timezone
-from typing import List
 
 import httpx
 
 from app.config import settings
 from app.db import get_db
 from app.opa_client import check_budget, check_skill_access, check_task_execution
+from contracts.model_usage import BudgetStatus, ModelUsageRecord
 from contracts.task import (
     ApprovalTier,
     AuditEntry,
@@ -26,17 +27,19 @@ from contracts.task import (
     TaskResult,
     TaskStatus,
 )
-from contracts.model_usage import BudgetStatus, ModelUsageRecord
 
 log = logging.getLogger("supervisor.tasks")
+
+_background_tasks: set[asyncio.Task] = set()
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _now() -> datetime:
-    return datetime.now(tz=timezone.utc)
+    return datetime.now(tz=UTC)
 
 
 async def _get_budget_status() -> BudgetStatus:
@@ -44,11 +47,13 @@ async def _get_budget_status() -> BudgetStatus:
     month = _now().strftime("%Y-%m")
     pipeline = [
         {"$match": {"timestamp": {"$regex": f"^{month}"}}},
-        {"$group": {
-            "_id": None,
-            "tokens_used": {"$sum": "$total_tokens"},
-            "cost_usd": {"$sum": "$cost_usd"},
-        }},
+        {
+            "$group": {
+                "_id": None,
+                "tokens_used": {"$sum": "$total_tokens"},
+                "cost_usd": {"$sum": "$cost_usd"},
+            }
+        },
     ]
     result = await db["model_usage"].aggregate(pipeline).to_list(1)
     tokens_used = result[0]["tokens_used"] if result else 0
@@ -88,6 +93,7 @@ async def _save(task: Task) -> None:
 # Public API
 # ---------------------------------------------------------------------------
 
+
 async def create_task(req: CreateTaskRequest) -> Task:
     task = Task(
         title=req.title,
@@ -114,7 +120,11 @@ async def plan_task(task: Task) -> Task:
         async with httpx.AsyncClient(timeout=60.0) as client:
             resp = await client.post(
                 f"{settings.planner_url}/plan",
-                json={"task_id": task.task_id, "title": task.title, "description": task.description},
+                json={
+                    "task_id": task.task_id,
+                    "title": task.title,
+                    "description": task.description,
+                },
             )
             resp.raise_for_status()
             plan_data = resp.json()
@@ -141,7 +151,9 @@ async def plan_task(task: Task) -> Task:
             await _save(task)
             log.info("Task %s plan generated, status=%s", task.task_id, task.status)
             # Fire execution immediately in the background
-            asyncio.create_task(execute_task(task.task_id))
+            bg_task = asyncio.create_task(execute_task(task.task_id))
+            _background_tasks.add(bg_task)
+            bg_task.add_done_callback(_background_tasks.discard)
         else:
             task.status = TaskStatus.AWAITING_APPROVAL
             await _audit(task, "supervisor", "awaiting_approval")
@@ -254,7 +266,7 @@ async def execute_task(task_id: str) -> Task:
     return task
 
 
-async def list_tasks(status: str | None = None, limit: int = 50) -> List[Task]:
+async def list_tasks(status: str | None = None, limit: int = 50) -> list[Task]:
     db = get_db()
     query = {"status": status} if status else {}
     docs = await db["tasks"].find(query).sort("created_at", -1).limit(limit).to_list(limit)

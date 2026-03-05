@@ -1,5 +1,5 @@
 """
-Skill Executor – drives a skill instruction using LiteLLM + MCP tools.
+Skill Executor - drives a skill instruction using LiteLLM + MCP tools.
 
 Flow per instruction:
   1. Load SKILL.md for the skill (cached via skill_loader)
@@ -11,11 +11,12 @@ Flow per instruction:
   7. Repeat until LLM returns a final text response
   8. Return summary + raw tool outputs
 """
+
 from __future__ import annotations
 
 import json
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 import litellm
 
@@ -29,10 +30,12 @@ from app.skill_loader import (
 
 log = logging.getLogger("skill-runner.executor")
 
-MAX_TOOL_ROUNDS = 10   # guard against infinite tool-call loops
+MAX_TOOL_ROUNDS = 10  # guard against infinite tool-call loops
 
 
-async def execute_instruction(skill_id: str, instruction: str, context: Dict[str, Any] | None = None) -> Dict[str, Any]:
+async def execute_instruction(
+    skill_id: str, instruction: str, context: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """
     Execute a natural language instruction using the named skill.
 
@@ -49,14 +52,20 @@ async def execute_instruction(skill_id: str, instruction: str, context: Dict[str
     try:
         skill_md = await fetch_skill(skill_id)
     except Exception as exc:
-        return {"success": False, "output": "", "tool_calls": [], "tokens_used": 0, "error": str(exc)}
+        return {
+            "success": False,
+            "output": "",
+            "tool_calls": [],
+            "tokens_used": 0,
+            "error": str(exc),
+        }
 
     # 2. Build messages
     system_content = skill_md
     if context:
         system_content += f"\n\n## Execution Context\n{json.dumps(context, indent=2)}"
 
-    messages: List[Dict[str, Any]] = [
+    messages: list[dict[str, Any]] = [
         {"role": "system", "content": system_content},
         {"role": "user", "content": instruction},
     ]
@@ -65,7 +74,7 @@ async def execute_instruction(skill_id: str, instruction: str, context: Dict[str
     mcp_url = get_skill_mcp_server(skill_id)
     auth_token = get_skill_auth_token(skill_id)
 
-    all_tool_calls: List[Dict[str, Any]] = []
+    all_tool_calls: list[dict[str, Any]] = []
     total_tokens = 0
 
     try:
@@ -91,13 +100,26 @@ async def execute_instruction(skill_id: str, instruction: str, context: Dict[str
                 tool_calls = getattr(msg, "tool_calls", None) or []
 
                 # Append assistant message to history
-                messages.append({"role": "assistant", "content": msg.content or "", "tool_calls": [
-                    {"id": tc.id, "type": "function", "function": {"name": tc.function.name, "arguments": tc.function.arguments}}
-                    for tc in tool_calls
-                ]})
+                messages.append(
+                    {
+                        "role": "assistant",
+                        "content": msg.content or "",
+                        "tool_calls": [
+                            {
+                                "id": tc.id,
+                                "type": "function",
+                                "function": {
+                                    "name": tc.function.name,
+                                    "arguments": tc.function.arguments,
+                                },
+                            }
+                            for tc in tool_calls
+                        ],
+                    }
+                )
 
                 if not tool_calls:
-                    # Final answer – no more tool calls
+                    # Final answer - no more tool calls
                     return {
                         "success": True,
                         "output": msg.content or "",
@@ -123,11 +145,13 @@ async def execute_instruction(skill_id: str, instruction: str, context: Dict[str
                     all_tool_calls.append({"tool": fn_name, "args": fn_args, "result": tool_result})
 
                     # Feed result back into conversation
-                    messages.append({
-                        "role": "tool",
-                        "tool_call_id": tc.id,
-                        "content": str(tool_result),
-                    })
+                    messages.append(
+                        {
+                            "role": "tool",
+                            "tool_call_id": tc.id,
+                            "content": str(tool_result),
+                        }
+                    )
 
             # Exceeded MAX_TOOL_ROUNDS
             return {
