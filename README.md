@@ -76,9 +76,10 @@ home-ai-control-plane/
 ├── infra/
 │   └── docker-compose.yml
 ├── policies/
-│   ├── task_execution.rego # allow/deny task execution
-│   ├── budget.rego         # token / cost limits
-│   └── skill_access.rego   # per-skill permission gates
+│   └── homeai/
+│       ├── budget/budget.rego   # token / cost limits
+│       ├── skill/skill.rego     # per-skill permission gates
+│       └── task/task.rego       # allow/deny task execution
 ├── services/
 │   ├── supervisor/         # Orchestration engine (FastAPI)
 │   ├── skill-runner/       # MCP-based skill executor (FastAPI)
@@ -163,11 +164,60 @@ OPA enforces three policy files at `policies/`:
 
 | Policy | What it controls |
 |---|---|
-| `task_execution.rego` | Allowed task states, iteration caps, pause/deny logic |
-| `budget.rego` | Per-task and daily token / cost limits |
-| `skill_access.rego` | Which skills are allowed and at what risk level |
+| `homeai/task/task.rego` | Allowed task states, iteration caps, pause/deny logic |
+| `homeai/budget/budget.rego` | Per-task and daily token / cost limits |
+| `homeai/skill/skill.rego` | Which skills are allowed and at what risk level |
 
 Policies are hot-reloaded — edit a `.rego` file and OPA picks up the change without restarting.
+
+---
+
+## Testing & Tooling
+
+### Run tests
+
+```bash
+pip install -r requirements-test.txt
+pytest
+```
+
+Tests live in `tests/` and mirror the source package structure:
+
+| Test module | What it covers |
+|---|---|
+| `tests/contracts/test_task.py` | `Task`, `ExecutionPlan`, `ExecutionStep`, enums, request/response models |
+| `tests/contracts/test_model_usage.py` | `ModelUsageRecord`, `BudgetStatus` |
+| `tests/supervisor/test_opa_client.py` | OPA REST wrapper — allow/deny/fail-closed behaviour |
+| `tests/supervisor/test_task_service.py` | Task lifecycle, budget guard, OPA gates |
+
+### Pre-commit hooks
+
+Installed automatically on first `git commit` after:
+
+```bash
+pip install pre-commit   # or: brew install pre-commit
+pre-commit install
+pre-commit install --hook-type commit-msg
+```
+
+| Hook | What it enforces |
+|---|---|
+| `ruff` | Python linting (auto-fix) |
+| `ruff-format` | Python formatting |
+| `pytest` | Contract tests must pass before every commit |
+| `conventional-pre-commit` | Commit messages must follow [Conventional Commits](https://www.conventionalcommits.org/) |
+
+**Valid commit types:** `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
+
+```bash
+# ✅ valid
+git commit -m "feat(supervisor): add retry logic for OPA timeouts"
+git commit -m "fix(budget): handle zero-token edge case"
+git commit -m "chore: bump OPA to v1.14.0"
+
+# ❌ rejected
+git commit -m "updated stuff"
+```
 
 ---
 
