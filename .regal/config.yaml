@@ -1,0 +1,13 @@
+rules:
+  idiomatic:
+    directory-package-mismatch:
+      level: error
+  style:
+    opa-fmt:
+      level: warning
+    line-length:
+      level: warning
+      extra-args:
+        max-line-length: 120
+    messy-rule:
+      level: warning
