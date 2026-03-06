@@ -22,7 +22,7 @@ services:
   # Open Policy Agent
   # --------------------------------------------------------------------------
   opa:
-    image: openpolicyagent/opa:0.63.0
+    image: openpolicyagent/opa:1.14.0
     container_name: homeai-opa
     restart: unless-stopped
     command:
