@@ -165,7 +165,7 @@ def get_skill_mcp_server(skill_id: str) -> str | None:
         if mcp:
             return mcp
     meta = get_skill_metadata(skill_id)
-    return meta.get("metadata", {}).get("mcp_server")
+    return meta.get("mcp_server")
 
 
 def get_skill_auth_token(skill_id: str) -> str:
