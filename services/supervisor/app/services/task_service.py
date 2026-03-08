@@ -255,6 +255,17 @@ async def execute_task(task_id: str) -> Task:
         task.status = TaskStatus.COMPLETED if result.success else TaskStatus.FAILED
         await _audit(task, "supervisor", "execution_completed", f"success={result.success}")
 
+        # Record execution tokens to model_usage collection
+        if result.tokens_used > 0:
+            db = get_db()
+            usage = ModelUsageRecord(
+                task_id=task_id,
+                agent="skill-runner",
+                model=settings.execution_model,
+                total_tokens=result.tokens_used,
+            )
+            await db["model_usage"].insert_one(usage.model_dump(mode="json"))
+
     except Exception as exc:
         log.error("Execution failed for task %s: %s", task_id, exc)
         task.status = TaskStatus.FAILED
