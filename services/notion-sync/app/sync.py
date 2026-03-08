@@ -24,11 +24,6 @@ from app.notion_client import (
 
 log = logging.getLogger("notion-sync.sync")
 
-# In-memory set of task_ids we've already pushed to Notion
-# (in production this would be persisted in Mongo)
-_synced_to_notion: set[str] = set()
-_processed_approvals: set[str] = set()
-
 
 async def _sync_pending_to_notion() -> None:
     """Push AWAITING_APPROVAL tasks to Notion if not yet created."""
@@ -46,10 +41,7 @@ async def _sync_pending_to_notion() -> None:
 
     for task in tasks:
         task_id = task["task_id"]
-        if task_id in _synced_to_notion:
-            continue
         if task.get("notion_page_id"):
-            _synced_to_notion.add(task_id)
             continue
 
         try:
@@ -65,7 +57,6 @@ async def _sync_pending_to_notion() -> None:
                     f"{settings.supervisor_url}/tasks/{task_id}",
                     json={"notion_page_id": page_id},
                 )
-            _synced_to_notion.add(task_id)
             log.info("Task %s synced to Notion page %s", task_id, page_id)
         except Exception as exc:
             log.error("Failed to create Notion page for task %s: %s", task_id, exc)
@@ -81,18 +72,31 @@ async def _sync_approvals_from_notion() -> None:
 
     for item in approved_pages:
         task_id = item["task_id"]
-        if task_id in _processed_approvals:
-            continue
-
         notion_status = item["notion_status"]
         endpoint = "approve" if notion_status == "Approved" else "reject"
 
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
+                # Prevent duplicate transitions after restarts: only apply decisions
+                # while the task is still awaiting approval.
+                task_resp = await client.get(f"{settings.supervisor_url}/tasks/{task_id}")
+                if task_resp.status_code == 404:
+                    log.warning("Task %s not found in supervisor; skipping", task_id)
+                    continue
+                task_resp.raise_for_status()
+                current_task = task_resp.json()
+                if current_task.get("status") != "awaiting_approval":
+                    log.info(
+                        "Skipping %s for task %s; current status=%s",
+                        endpoint,
+                        task_id,
+                        current_task.get("status"),
+                    )
+                    continue
+
                 resp = await client.post(f"{settings.supervisor_url}/tasks/{task_id}/{endpoint}")
                 resp.raise_for_status()
 
-            _processed_approvals.add(task_id)
             log.info("Task %s %s via Notion", task_id, endpoint + "d")
 
             # Update page to reflect the system processed it
