@@ -27,6 +27,7 @@ from app.skill_loader import (
     get_skill_auth_token,
     get_skill_mcp_server,
 )
+from contracts.task import TaskResult
 
 log = logging.getLogger("skill-runner.executor")
 
@@ -73,6 +74,15 @@ async def execute_instruction(
     # 3. Get MCP server details
     mcp_url = get_skill_mcp_server(skill_id)
     auth_token = get_skill_auth_token(skill_id)
+
+    if not mcp_url:
+        return TaskResult(
+            success=False,
+            error=f"Skill '{skill_id}' has no MCP server configured. Check skill registry.",
+            output="",
+            tool_calls=[],
+            tokens_used=0,
+        )
 
     all_tool_calls: list[dict[str, Any]] = []
     total_tokens = 0
