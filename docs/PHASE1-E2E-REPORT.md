@@ -53,7 +53,7 @@ Current status by step:
 
 5. Build determinism
 - `constraints.txt`: pinned `pymongo==4.8.0`.
-- `infra/docker-compose.yml`: pinned LiteLLM image to `ghcr.io/berriai/litellm:v1.35.0`.
+- `infra/docker-compose.yml`: pinned LiteLLM image by digest (`ghcr.io/berriai/litellm@sha256:...`).
 
 ## Test Verification
 
