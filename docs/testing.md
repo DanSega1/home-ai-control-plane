@@ -28,6 +28,28 @@ pytest tests/supervisor/test_task_service.py::TestExecuteTask
 pytest tests/supervisor/test_task_service.py::TestExecuteTask::test_policy_denied_when_opa_rejects_task
 ```
 
+## Docker Compose Smoke Test (Phase 1)
+
+Use this to verify the end-to-end MVP flow against the running stack:
+
+```bash
+bash scripts/run_e2e_smoke.sh
+```
+
+What it does:
+- starts `infra/docker-compose.yml`
+- waits for `supervisor` health
+- creates a task
+- approves it through supervisor API
+- waits for terminal state and validates result persistence
+
+Useful env overrides:
+
+```bash
+KEEP_STACK_UP=1 bash scripts/run_e2e_smoke.sh
+BASE_URL=http://localhost:8000 TIMEOUT_SECONDS=300 bash scripts/run_e2e_smoke.sh
+```
+
 `pytest` is configured in `pyproject.toml`:
 - `testpaths = ["tests"]`
 - `asyncio_mode = "auto"` — all async tests run without `@pytest.mark.asyncio`
