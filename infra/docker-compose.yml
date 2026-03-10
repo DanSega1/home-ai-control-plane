@@ -41,12 +41,12 @@ services:
   # LiteLLM – model router / proxy
   # --------------------------------------------------------------------------
   litellm:
-    image: ghcr.io/berriai/litellm:v1.35.0
+    image: ghcr.io/berriai/litellm@sha256:0284ccde2cd444563f9baec23adbfddd5e062342b17984fe83c449d5503eec0e
     container_name: homeai-litellm
     restart: unless-stopped
     volumes:
       - ../config/litellm_config.yaml:/app/config.yaml:ro
-    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    command: python -m litellm.proxy.proxy --config /app/config.yaml --port 4000
     env_file:
       - ../config/.env.litellm
     ports:
