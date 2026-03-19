@@ -1,331 +1,123 @@
-# 🧠 Home AI Control Plane – Implementation Plan
-
-## Overview
-
-This project implements a **policy-governed, multi-agent AI control plane** designed to manage:
-
-* Personal digital workflows (Notion, PKM, automation)
-* Home lab services (Docker, monitoring, backups)
-* Smart home integrations
-* Budget enforcement for LLM usage
-* Skill-based extensibility
-* Governance and approval workflows
+# Conductor Engine + Home Control Plane Development Plan
 
-The system is:
+## Summary
 
-* Single-node (Raspberry Pi 5, 8GB RAM)
-* Docker-based
-* Policy-first (OPA enforced)
-* Human-in-the-loop
-* Secure-by-design
-* Monorepo, multi-container architecture
+This roadmap replaces the existing single-track `PLAN.md` and becomes the canonical plan for both layers:
 
----
+- **Conductor Engine** is the generic framework: task runtime, agents, capabilities, policy hooks, storage abstractions, and execution workflows.
+- **Home AI Control Plane** is the first production application built on top of that framework.
 
-# 🎯 Project Goals
-
-1. Build a **Supervisor-based orchestration engine**
-2. Enforce execution using **Open Policy Agent (OPA)**
-3. Use **MongoDB as source of truth**
-4. Provide human approvals via **Notion Kanban**
-5. Isolate execution via a **Skill Runner**
-6. Enforce **budget + iteration limits**
-7. Support future expansion via **Agent Guild**
-8. Maintain strong separation of:
-
-   * Intelligence
-   * Authority
-   * Execution
-   * Policy
-   * State
-
----
-
-# 🏗 Architecture Summary
-
-```
-User / Events
-    ↓
-LiteLLM Router
-    ↓
-Supervisor (Python)
-    ↓
-OPA (Policy Enforcement)
-    ↓
-Skill Runner (Execution Boundary)
-    ↓
-External Systems (Notion, Docker, APIs)
-
-MongoDB = Source of Truth
-```
-
----
-
-# 🧱 Technology Stack
-
-| Component     | Tech                                   |
-| ------------- | -------------------------------------- |
-| Supervisor    | Python (FastAPI)                       |
-| Agents        | Python                                 |
-| Policy Engine | OPA (Go)                               |
-| Skill Runner  | Python (Phase 1) → Go (optional later) |
-| Database      | MongoDB                                |
-| Model Router  | LiteLLM                                |
-| Deployment    | Docker Compose                         |
-| Backup        | mongodump + encrypted archive          |
-| Secrets       | Docker secrets / local secure files    |
-
----
-
-# 🗂 Repository Structure
-
-```
-services/
-  supervisor/
-  notion-sync/
-  skill-runner/
-
-agents/
-  planner/
-
-policies/
-
-contracts/
-
-skills/
-  raindrop-io/
-
-infra/
-  docker-compose.yml
-
-config/
-docs/
-```
-
----
-
-# 🚀 Implementation Phases
-
----
-
-# Phase 1 – Minimal Viable Control Plane
-
-## Objective
-
-Build a fully functional but minimal system proving:
-
-* Task lifecycle works
-* OPA enforcement works
-* Approval gating works
-* One skill executes safely
-* Budget enforcement works
-
-## Components
-
-* MongoDB
-* OPA (basic policies)
-* Supervisor
-* Planner Agent
-* LiteLLM integration
-* Skill Runner (Raindrop skill)
-* Notion Sync (task board only)
-
-## Deliverable
-
-End-to-end flow:
-
-1. Create task
-2. Planner generates structured plan
-3. Await approval
-4. Approve in Notion
-5. OPA validates
-6. Skill executes
-7. Result logged in Mongo
-
----
-
-# Phase 2 – Multi-Agent & Governance Expansion
-
-## Objective
-
-Introduce controlled specialization and orchestration.
-
-## Add:
-
-* Lab Agent (read-only)
-* Backup Agent (snapshot-only)
-* Risk scoring
-* Iteration caps
-* Pause / resume logic
-* Agent Profiles registry
-* Agent Guild (proposal-only mode)
-
-## Deliverable
-
-* Supervisor can route subtasks to role agents
-* Agent Guild can propose new agents
-* OPA validates agent creation
-* Strict governance remains enforced
-
----
-
-# Phase 3 – Lab & Automation Control
-
-## Objective
-
-Controlled interaction with home lab systems.
-
-## Add:
-
-* Docker inspection (read-only)
-* Monitoring integration
-* Snapshot system
-* Backup automation
-* Google Drive encrypted sync
-
-## Deliverable
-
-* System can monitor lab health
-* Create backup tasks
-* Propose container updates (approval required)
-
----
-
-# Phase 4 – Hardening & Observability
-
-## Objective
-
-Production-level robustness.
-
-## Add:
-
-* Monitoring stack (Prometheus + Grafana)
-* Health endpoints
-* Audit dashboards
-* Policy test suite
-* Disaster recovery validation
-* Documentation refinement
-
----
-
-# 🛡 Governance Model
-
-All execution follows:
-
-```
-Agent proposes
-Supervisor routes
-OPA authorizes
-Skill executes
-Mongo records
-Human approves (if required)
-```
-
-### Approval Tiers
-
-| Tier     | Behavior            |
-| -------- | ------------------- |
-| Low      | Auto-approve        |
-| Medium   | Notify              |
-| High     | Manual approval     |
-| Critical | Multi-step approval |
-
-Destructive actions always require approval.
-
----
-
-# 💰 Budget Enforcement
-
-* Track token usage in `model_usage` collection
-* Enforce monthly budget cap
-* OPA denies execution if limit exceeded
-* Per-task token caps enforced
-
----
-
-# 🔐 Security Model
-
-* No direct shell access from LLM
-* No Docker socket access
-* No direct secret exposure to agents
-* Secrets injected per service
-* OPA mediates all execution
-* Skill execution isolated
-* Snapshot before destructive action
-
----
-
-# 🔁 Backup Strategy
-
-## Mongo
-
-* Daily mongodump
-* Encrypted archive
-* Stored locally + remote encrypted storage
-
-## Notion
-
-* API-based export of AI-managed DBs
-* Encrypted archive
-
----
-
-# 📦 Development Strategy
-
-* Develop locally
-* Deploy to Pi via Docker Compose
-* Weekly integration tests
-* Keep policies versioned
-* Keep configuration declarative
-* Avoid overengineering
-
----
-
-# 📈 Estimated Timeline (Side Project)
-
-| Phase   | Duration   |
-| ------- | ---------- |
-| Phase 1 | 6–8 weeks  |
-| Phase 2 | 4–6 weeks  |
-| Phase 3 | 6–8 weeks  |
-| Phase 4 | 6–10 weeks |
-
-Total: 6–12 months sustainable pace.
-
----
-
-# 🧠 Design Principles
-
-* Policy-first
-* Human-in-the-loop
-* Deterministic state transitions
-* Minimal implicit trust
-* Strict separation of concerns
-* Reversible actions
-* Budget-aware reasoning
-* Config-as-code
-* State backed up independently
-
----
-
-# 🧭 Future Possibilities
-
-* k3s migration
-* Multi-node scaling
-* External dashboard
-* SSO integration (Authentik)
-* Advanced runtime guardrails
-* Agent trust scoring
-
----
-
-# 🏁 Definition of Success
-
-The platform is successful when:
-
-* It safely executes real automation tasks
-* It cannot bypass governance
-* It cannot exceed budget
-* It can recover from failure
-* It remains understandable and auditable
-* It does not require constant babysitting
+Current status: **Phase 1 is partially complete**. The repo already contains a minimal engine runtime, capability registry, local task store/queue, built-in capabilities, docs-first contracts, and the `cond` CLI. Phase 1 now focuses on hardening that foundation, extracting it into its own repository, and publishing it as a versioned Python package consumed by Home AI Control Plane.
+
+## Implementation Plan
+
+### Phase 1 — Foundation (Engine v0.1, partially complete)
+
+- Freeze the Phase 1 public surface around `TaskSubmission`, `TaskRecord`, `TaskStatus`, `Capability`, `CapabilityRegistry`, `TaskStore`, and `cond`.
+- Keep the runtime planner-free: `Task -> Supervisor -> Capability -> Result`.
+- Complete packaging so `conductor-engine` is installable and runnable independently of the Home app.
+- Split repositories **during Phase 1**, not later: create `conductor-engine` as its own repo, move the generic `engine/`, CLI, engine docs, and engine tests there, and leave Home-specific services/contracts/policies in `home-ai-control-plane`.
+- Publish `conductor-engine` as a versioned Python package and make Home AI Control Plane consume it as a pinned dependency.
+- Exit criteria:
+  - `pip install conductor-engine` works in a clean environment
+  - `cond run`, `cond capability list`, and `cond task list` work without Home-specific code
+  - built-in capabilities load dynamically
+  - Home AI Control Plane runs against the published package instead of in-repo engine code
+
+### Phase 2 — Agent Layer
+
+- Introduce logical agent roles in the framework: `PlannerAgent`, `WorkerAgent`, and `ValidatorAgent`.
+- Upgrade the task model from single-capability execution to planned execution with `goal`, `plan`, `steps`, `result`, and `evaluation`.
+- Define the execution loop as `Task -> Planner -> Worker -> Validator -> Supervisor decision`.
+- Add retries, iteration limits, partial-success handling, and failure recovery in the supervisor.
+- Keep agents optional: the engine must still support deterministic non-agent execution paths.
+
+### Phase 3 — Governance & Safety
+
+- Add a framework-level `PolicyEngine.authorize(action, context)` contract with adapters for local rules and OPA.
+- Move risk classification into capability metadata with `low`, `medium`, `high`, and `critical`.
+- Add approval hooks for high-risk tasks before execution.
+- Expand guardrails to cover schema validation, tool filtering, input checks, and output validation.
+- Keep policy enforcement generic in the engine; Home-specific approval UX stays in the app layer.
+
+### Phase 4 — Storage & Scaling
+
+- Formalize framework storage contracts: `TaskStore`, `Queue`, and optional execution-state/locking primitives.
+- Implement adapters for memory/local storage first, then Postgres, Mongo, and Redis or Valkey.
+- Add task claiming and locking so multiple supervisors can operate safely.
+- Shift the worker model from in-process execution to `Supervisor -> Queue -> Workers -> Result`.
+
+### Phase 5 — Runtime Modes
+
+- Support four runtime targets from the same engine package: local single-process, Docker, Kubernetes/Helm, and agent-hosted platforms.
+- Keep runtime mode as deployment/configuration, not a forked code path.
+
+### Phase 6 — Observability
+
+- Add framework-native metrics for execution time, success rate, retries, token usage, and failures.
+- Emit structured logs and expose Prometheus-compatible metrics.
+- Keep Grafana and dashboarding in deployment/app integrations rather than core engine code.
+
+### Phase 7 — Plugin Ecosystem
+
+- Standardize plugin packaging around Python packages first, with Git-based install as a secondary path for early plugins.
+- Define a capability manifest format for name, inputs, risk level, and capability metadata.
+- Keep capability loading registry-driven and package-based; Home app skills and app integrations should become engine plugins over time where practical.
+
+### Phase 8 — Home AI Control Plane
+
+- Rebuild Home AI Control Plane explicitly as an app on top of `conductor-engine`.
+- Keep Home-specific integrations here: Raindrop, Notion, Google, GitHub, Home Assistant, Plex/ARR, PKM workflows, approval UX, and homelab automation.
+- Replace direct internal engine assumptions with package-level engine APIs.
+- Use the app as the primary proving ground for framework features before promoting them into engine core.
+
+### Phase 9 — Advanced Features
+
+- Add optional scoring, agent performance tracking, agent creation/guild workflows, learning loops, and recommendation features only after the framework and app boundaries are stable.
+- Treat this phase as experimental and explicitly non-blocking for v0.x adoption.
+
+## Public Interfaces and Defaults
+
+- **Phase 1 engine contracts**
+  - Task: `TaskSubmission`, `TaskRecord`, `TaskStatus`, `TaskResult`
+  - Execution: `TaskSupervisor`
+  - Capability system: `Capability`, `CapabilityDescriptor`, `CapabilityContext`, `CapabilityResult`, `CapabilityRegistry`
+  - Storage: `TaskStore`, local JSON store, in-memory queue
+  - CLI: `cond run`, `cond capability list`, `cond task list`
+- **Phase 2 additions**
+  - Agent contracts: planner, worker, validator roles
+  - Planned task structure with explicit `goal`, `plan`, `steps`, `result`, `evaluation`
+- **Phase 3 additions**
+  - `PolicyEngine` authorization interface
+  - approval and risk metadata at the framework level
+- Defaults chosen:
+  - canonical planning doc is top-level `PLAN.md`
+  - repo split happens in Phase 1, before Phase 2
+  - Home AI Control Plane consumes `conductor-engine` as a **published package**
+  - AI remains optional; deterministic execution stays supported
+  - framework core stays generic and free of Home-specific policy, skill, or infra assumptions
+
+## Test Plan and Acceptance
+
+- **Phase 1**
+  - engine contract tests for task/capability/storage models
+  - CLI smoke tests for `cond run`, `cond capability list`, `cond task list`
+  - capability loading tests for built-ins and plugin registration
+  - filesystem guardrail tests for path confinement
+  - package install smoke test in a clean environment
+  - Home app integration test proving it imports and runs against the published engine package
+- **Phase 2**
+  - planner/worker/validator loop tests, retry behavior, iteration caps, and partial-success cases
+- **Phase 3**
+  - policy allow/deny tests, approval-required flow tests, and risk-level enforcement
+- **Phase 4**
+  - multi-supervisor claim/lock tests and queue adapter tests
+- **Phase 5–8**
+  - deployment smoke tests per runtime mode, observability endpoint checks, plugin manifest validation, and end-to-end Home Control Plane workflows
+
+## Assumptions
+
+- The current engine slice in this repo is the seed of `conductor-engine`, not throwaway prototype code.
+- Existing Home-specific services remain in this repo until the package split is complete, then they switch to the published dependency.
+- The framework is allowed to evolve during `v0.x`, but only documented public contracts should be treated as stable by the Home app.
+- Foundation-first remains the governing rule: if a feature belongs to the framework long-term, it should be generalized there before adding Home-only variants.
