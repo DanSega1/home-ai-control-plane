@@ -4,4 +4,5 @@ litellm
 pydantic
 pydantic-settings
 python-dotenv
+conductor-engine @ git+https://github.com/DanSega1/Conductor-Engine.git
 memu

@@ -2,7 +2,7 @@
 
 A **policy-governed, multi-agent AI control plane** running on a single Raspberry Pi 5. It manages personal digital workflows, home-lab services, and smart-home integrations — with OPA-enforced approvals, budget limits, and a skill-based execution model.
 
-The repo also now includes a minimal **Conductor Engine** foundation under `engine/` and `cli/`. That layer is generic, planner-free, and installable on its own, so it can become the framework base while the existing Home AI services remain the real-world implementation layer.
+The generic framework layer now lives in the separate [Conductor-Engine](https://github.com/DanSega1/Conductor-Engine) repository. This repo is the application layer that consumes that framework.
 
 ---
 
@@ -66,27 +66,16 @@ flowchart TD
 
 ```
 home-ai-control-plane/
-├── cli/
-│   └── cond.py            # `cond` CLI for the generic engine runtime
-├── engine/
-│   ├── capabilities/      # built-in echo / filesystem / http capabilities
-│   ├── guardrails/        # validation helpers
-│   ├── interfaces/        # task / capability / agent contracts
-│   ├── registry/          # capability registry
-│   ├── runtime/           # local task store + queue
-│   └── supervisor/        # minimal Task -> Capability -> Result loop
 ├── agents/
 │   └── planner/            # Planner agent (FastAPI)
 ├── config/
-│   ├── conductor.capabilities.yaml  # generic engine capability config
 │   ├── litellm_config.yaml
-│   └── .env.*.example              # per-service env templates
+│   └── .env.*.example      # per-service env templates
 ├── constraints.txt          # pinned Python package versions (monorepo-wide)
 ├── contracts/
 │   ├── task.py             # shared Task / Plan pydantic models
 │   └── model_usage.py      # LLM usage tracking schema
 ├── docs/
-│   ├── conductor/          # engine contracts + execution flow docs
 │   └── ...
 ├── infra/
 │   └── docker-compose.yml
@@ -127,25 +116,15 @@ To add a skill, append an entry to `skills/registry.yaml` — no code changes re
 
 ## Getting Started
 
-### Minimal Conductor Engine CLI
+### Conductor Engine
 
-The generic engine can run without Docker:
+The extracted framework now lives in a separate repository:
 
 ```bash
-pip install -e .
-cond capability list
-cond run task.yaml
-cond task list
+git clone https://github.com/DanSega1/Conductor-Engine.git
 ```
 
-Example task file:
-
-```yaml
-name: Echo smoke test
-capability: echo
-input:
-  message: hello from conductor
-```
+This repo consumes that framework from the planner/runtime side rather than tracking the generic `engine/` code directly.
 
 ### Prerequisites
 - Docker + Docker Compose

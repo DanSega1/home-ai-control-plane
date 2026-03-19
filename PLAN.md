@@ -7,7 +7,7 @@ This roadmap replaces the existing single-track `PLAN.md` and becomes the canoni
 - **Conductor Engine** is the generic framework: task runtime, agents, capabilities, policy hooks, storage abstractions, and execution workflows.
 - **Home AI Control Plane** is the first production application built on top of that framework.
 
-Current status: **Phase 1 is partially complete**. The repo already contains a minimal engine runtime, capability registry, local task store/queue, built-in capabilities, docs-first contracts, and the `cond` CLI. Phase 1 now focuses on hardening that foundation, extracting it into its own repository, and publishing it as a versioned Python package consumed by Home AI Control Plane.
+Current status: **Phase 1 is partially complete**. The engine runtime, capability registry, local task store/queue, built-in capabilities, docs-first contracts, and `cond` CLI have now been extracted into the separate `Conductor-Engine` repository. Phase 1 now focuses on package publication and hardening Home AI Control Plane’s dependency on the extracted framework.
 
 ## Implementation Plan
 
@@ -15,7 +15,7 @@ Current status: **Phase 1 is partially complete**. The repo already contains a m
 
 **Status:** In progress
 
-**Done in repo:**
+**Done overall:**
 - docs-first engine contracts exist
 - minimal runtime exists
 - capability registry/loader exists
@@ -23,9 +23,9 @@ Current status: **Phase 1 is partially complete**. The repo already contains a m
 - local JSON task store + in-memory queue exist
 - built-in capabilities exist
 - optional memU-backed memory abstraction/plugin exists
+- the framework has been split into the `Conductor-Engine` repository
 
 **Still pending:**
-- extract `conductor-engine` into its own repository
 - publish the framework as a versioned package
 - switch Home AI Control Plane to consume the published package
 - complete install/distribution hardening for a clean standalone release
@@ -33,7 +33,7 @@ Current status: **Phase 1 is partially complete**. The repo already contains a m
 - Freeze the Phase 1 public surface around `TaskSubmission`, `TaskRecord`, `TaskStatus`, `Capability`, `CapabilityRegistry`, `TaskStore`, and `cond`.
 - Keep the runtime planner-free: `Task -> Supervisor -> Capability -> Result`.
 - Complete packaging so `conductor-engine` is installable and runnable independently of the Home app.
-- Split repositories **during Phase 1**, not later: create `conductor-engine` as its own repo, move the generic `engine/`, CLI, engine docs, and engine tests there, and leave Home-specific services/contracts/policies in `home-ai-control-plane`.
+- Repository split is complete: `Conductor-Engine` now holds the generic `engine/`, CLI, engine docs, and engine tests, while `home-ai-control-plane` keeps the Home-specific services/contracts/policies.
 - Publish `conductor-engine` as a versioned Python package and make Home AI Control Plane consume it as a pinned dependency.
 - Exit criteria:
   - `pip install conductor-engine` works in a clean environment
@@ -152,7 +152,7 @@ Note: Home AI Control Plane already has app-level OPA/policy and approval mechan
 
 ## Assumptions
 
-- The current engine slice in this repo is the seed of `conductor-engine`, not throwaway prototype code.
-- Existing Home-specific services remain in this repo until the package split is complete, then they switch to the published dependency.
+- The extracted engine slice in `Conductor-Engine` is the seed of the long-term framework, not throwaway prototype code.
+- The framework has already been extracted into `Conductor-Engine`; the remaining dependency goal is to move from git-based consumption to a published package release.
 - The framework is allowed to evolve during `v0.x`, but only documented public contracts should be treated as stable by the Home app.
 - Foundation-first remains the governing rule: if a feature belongs to the framework long-term, it should be generalized there before adding Home-only variants.

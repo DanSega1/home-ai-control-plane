@@ -5,4 +5,5 @@ pytest-mock>=3.14
 httpx>=0.27          # needed by tests that import opa_client
 pydantic>=2.0
 pydantic-settings>=2.0
+conductor-engine @ git+https://github.com/DanSega1/Conductor-Engine.git
 pre-commit>=3.7

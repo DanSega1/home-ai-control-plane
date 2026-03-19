@@ -9,7 +9,6 @@ RUN pip install --no-cache-dir -c constraints.txt -r requirements.txt
 
 # Shared contracts
 COPY contracts /app/contracts
-COPY engine /app/engine
 
 COPY agents/planner/app/ /app/app/
 COPY agents/planner/main.py /app/

@@ -16,6 +16,9 @@ import pytest
 def planner_app_path(monkeypatch) -> Path:
     root = Path(__file__).resolve().parents[2]
     planner_path = root / "agents" / "planner"
+    conductor_engine_path = root.parent / "Conductor-Engine"
+    if conductor_engine_path.exists():
+        monkeypatch.syspath_prepend(str(conductor_engine_path))
     monkeypatch.syspath_prepend(str(planner_path))
 
     settings_module = types.ModuleType("pydantic_settings")
