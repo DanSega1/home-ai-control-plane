@@ -7,6 +7,7 @@ from engine.interfaces.capability import (
     CapabilityDescriptor,
     CapabilityResult,
 )
+from engine.interfaces.memory import MemoryDocument, MemoryHit, MemoryProvider, MemoryQuery
 from engine.interfaces.task import RiskLevel, TaskRecord, TaskResult, TaskStatus, TaskSubmission
 
 __all__ = [
@@ -18,6 +19,10 @@ __all__ = [
     "CapabilityContext",
     "CapabilityDescriptor",
     "CapabilityResult",
+    "MemoryDocument",
+    "MemoryHit",
+    "MemoryProvider",
+    "MemoryQuery",
     "RiskLevel",
     "TaskRecord",
     "TaskResult",
