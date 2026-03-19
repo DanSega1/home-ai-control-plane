@@ -15,6 +15,7 @@ from typing import Any
 import litellm
 
 from app.config import settings
+from app.memory import get_relevant_memory_context
 from contracts.task import ApprovalTier, ExecutionPlan, ExecutionStep, RiskLevel
 
 log = logging.getLogger("planner")
@@ -79,7 +80,11 @@ async def generate_plan(task_id: str, title: str, description: str) -> dict[str,
     """
     Call LiteLLM and return a dict with keys: plan, tokens_used, model.
     """
-    user_message = f"Task: {title}\n\nDescription: {description}"
+    memory_context = await get_relevant_memory_context(title, description)
+    message_sections = [f"Task: {title}", f"Description: {description}"]
+    if memory_context:
+        message_sections.append(memory_context)
+    user_message = "\n\n".join(message_sections)
 
     response = await litellm.acompletion(
         model=settings.default_model,
@@ -128,7 +133,13 @@ async def generate_plan(task_id: str, title: str, description: str) -> dict[str,
         reasoning=plan_dict.get("reasoning", ""),
     )
 
-    log.info("Task %s plan generated: %d steps, risk=%s", task_id, len(steps), plan.risk_level)
+    log.info(
+        "Task %s plan generated: %d steps, risk=%s, memory_context=%s",
+        task_id,
+        len(steps),
+        plan.risk_level,
+        bool(memory_context),
+    )
     return {
         "plan": plan.model_dump(mode="json"),
         "tokens_used": tokens_used,
