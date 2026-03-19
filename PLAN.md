@@ -13,6 +13,23 @@ Current status: **Phase 1 is partially complete**. The repo already contains a m
 
 ### Phase 1 — Foundation (Engine v0.1, partially complete)
 
+**Status:** In progress
+
+**Done in repo:**
+- docs-first engine contracts exist
+- minimal runtime exists
+- capability registry/loader exists
+- `cond` CLI exists
+- local JSON task store + in-memory queue exist
+- built-in capabilities exist
+- optional memU-backed memory abstraction/plugin exists
+
+**Still pending:**
+- extract `conductor-engine` into its own repository
+- publish the framework as a versioned package
+- switch Home AI Control Plane to consume the published package
+- complete install/distribution hardening for a clean standalone release
+
 - Freeze the Phase 1 public surface around `TaskSubmission`, `TaskRecord`, `TaskStatus`, `Capability`, `CapabilityRegistry`, `TaskStore`, and `cond`.
 - Keep the runtime planner-free: `Task -> Supervisor -> Capability -> Result`.
 - Complete packaging so `conductor-engine` is installable and runnable independently of the Home app.
@@ -26,6 +43,8 @@ Current status: **Phase 1 is partially complete**. The repo already contains a m
 
 ### Phase 2 — Agent Layer
 
+**Status:** Not started
+
 - Introduce logical agent roles in the framework: `PlannerAgent`, `WorkerAgent`, and `ValidatorAgent`.
 - Upgrade the task model from single-capability execution to planned execution with `goal`, `plan`, `steps`, `result`, and `evaluation`.
 - Define the execution loop as `Task -> Planner -> Worker -> Validator -> Supervisor decision`.
@@ -33,6 +52,10 @@ Current status: **Phase 1 is partially complete**. The repo already contains a m
 - Keep agents optional: the engine must still support deterministic non-agent execution paths.
 
 ### Phase 3 — Governance & Safety
+
+**Status:** Not started in the framework
+
+Note: Home AI Control Plane already has app-level OPA/policy and approval mechanisms, but the generic engine-level governance layer is not yet implemented.
 
 - Add a framework-level `PolicyEngine.authorize(action, context)` contract with adapters for local rules and OPA.
 - Move risk classification into capability metadata with `low`, `medium`, `high`, and `critical`.
@@ -42,6 +65,8 @@ Current status: **Phase 1 is partially complete**. The repo already contains a m
 
 ### Phase 4 — Storage & Scaling
 
+**Status:** Not started
+
 - Formalize framework storage contracts: `TaskStore`, `Queue`, and optional execution-state/locking primitives.
 - Implement adapters for memory/local storage first, then Postgres, Mongo, and Redis or Valkey.
 - Add task claiming and locking so multiple supervisors can operate safely.
@@ -49,10 +74,14 @@ Current status: **Phase 1 is partially complete**. The repo already contains a m
 
 ### Phase 5 — Runtime Modes
 
+**Status:** Not started
+
 - Support four runtime targets from the same engine package: local single-process, Docker, Kubernetes/Helm, and agent-hosted platforms.
 - Keep runtime mode as deployment/configuration, not a forked code path.
 
 ### Phase 6 — Observability
+
+**Status:** Not started
 
 - Add framework-native metrics for execution time, success rate, retries, token usage, and failures.
 - Emit structured logs and expose Prometheus-compatible metrics.
@@ -60,11 +89,15 @@ Current status: **Phase 1 is partially complete**. The repo already contains a m
 
 ### Phase 7 — Plugin Ecosystem
 
+**Status:** Not started
+
 - Standardize plugin packaging around Python packages first, with Git-based install as a secondary path for early plugins.
 - Define a capability manifest format for name, inputs, risk level, and capability metadata.
 - Keep capability loading registry-driven and package-based; Home app skills and app integrations should become engine plugins over time where practical.
 
 ### Phase 8 — Home AI Control Plane
+
+**Status:** In progress
 
 - Rebuild Home AI Control Plane explicitly as an app on top of `conductor-engine`.
 - Keep Home-specific integrations here: Raindrop, Notion, Google, GitHub, Home Assistant, Plex/ARR, PKM workflows, approval UX, and homelab automation.
@@ -72,6 +105,8 @@ Current status: **Phase 1 is partially complete**. The repo already contains a m
 - Use the app as the primary proving ground for framework features before promoting them into engine core.
 
 ### Phase 9 — Advanced Features
+
+**Status:** Not started
 
 - Add optional scoring, agent performance tracking, agent creation/guild workflows, learning loops, and recommendation features only after the framework and app boundaries are stable.
 - Treat this phase as experimental and explicitly non-blocking for v0.x adoption.
