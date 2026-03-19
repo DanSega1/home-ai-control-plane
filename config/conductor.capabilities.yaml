@@ -1,0 +1,5 @@
+include_builtins: true
+
+# Additive plugin config for the generic Conductor Engine runtime.
+# Built-ins ship automatically; this file exists to demonstrate dynamic loading.
+capabilities: []
