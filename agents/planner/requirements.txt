@@ -4,3 +4,4 @@ litellm
 pydantic
 pydantic-settings
 python-dotenv
+memu

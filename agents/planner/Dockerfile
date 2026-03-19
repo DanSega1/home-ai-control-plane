@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 WORKDIR /app
 
@@ -9,6 +9,7 @@ RUN pip install --no-cache-dir -c constraints.txt -r requirements.txt
 
 # Shared contracts
 COPY contracts /app/contracts
+COPY engine /app/engine
 
 COPY agents/planner/app/ /app/app/
 COPY agents/planner/main.py /app/
