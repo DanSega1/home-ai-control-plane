@@ -127,6 +127,7 @@ git clone https://github.com/DanSega1/Conductor-Engine.git
 This repo consumes that framework from the planner/runtime side rather than tracking the generic `engine/` code directly.
 
 ### Prerequisites
+- Python 3.14
 - Docker + Docker Compose
 - A running [Raindrop.io MCP server](https://github.com/DanSega1/raindrop-io-skill) (or another skill's MCP server)
 

@@ -58,7 +58,7 @@ class TestEvaluate:
         mock_client.post = AsyncMock(return_value=mock_response)
 
         with patch("httpx.AsyncClient", return_value=mock_client):
-            allowed, result = await opa_client.evaluate("homeai/task/allow", {})
+            allowed, _ = await opa_client.evaluate("homeai/task/allow", {})
 
         assert allowed is False
 
@@ -92,7 +92,7 @@ class TestEvaluate:
         mock_client.post = AsyncMock(return_value=mock_response)
 
         with patch("httpx.AsyncClient", return_value=mock_client):
-            allowed, result = await opa_client.evaluate("homeai/task/allow", {})
+            allowed, _ = await opa_client.evaluate("homeai/task/allow", {})
 
         assert allowed is False
 
