@@ -118,13 +118,21 @@ To add a skill, append an entry to `skills/registry.yaml` — no code changes re
 
 ### Conductor Engine
 
-The extracted framework now lives in a separate repository:
+This repo consumes the published framework package from PyPI rather than tracking the generic `engine/` code directly:
 
 ```bash
-git clone https://github.com/DanSega1/Conductor-Engine.git
+python3.14 -m pip install conductor-engine==0.6.0
 ```
 
-This repo consumes that framework from the planner/runtime side rather than tracking the generic `engine/` code directly.
+Conductor Engine currently provides the generic framework layer for:
+
+- capability loading and plugin registration
+- built-in runtime capabilities (`echo`, `filesystem`, `http`, plus optional `memory`)
+- task supervision, retries, and local task persistence
+- the `cond` CLI (`run`, `capability list`, `task list`, `workflow run`)
+- workflow contracts and the `WorkflowOrchestrator`
+
+See [docs/conductor-engine.md](docs/conductor-engine.md) for a researched summary of the engine repo, capability surface, and how this app uses it.
 
 ### Prerequisites
 - Python 3.14
